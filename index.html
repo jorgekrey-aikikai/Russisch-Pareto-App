@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Russisch Trainer</title>
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="./manifest.json" />
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827;
+      --panel-2:#1f2937;
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#22c55e;
+      --accent-2:#3b82f6;
+      --danger:#ef4444;
+      --border:#334155;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0b1222,#111827 35%,#0f172a);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:16px;
+    }
+    .hero{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.6rem, 3vw, 2.2rem);
+    }
+    .sub{color:var(--muted); margin-top:6px; font-size:.95rem}
+    .grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background:rgba(17,24,39,.92);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .card h2, .card h3{
+      margin:0 0 12px 0;
+      font-size:1.05rem;
+    }
+    label{
+      display:block;
+      font-size:.9rem;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    input, textarea, select, button{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      padding:12px 13px;
+      font-size:15px;
+    }
+    textarea{min-height:92px; resize:vertical}
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .row-3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 560px){
+      .row,.row-3{grid-template-columns:1fr}
+    }
+    button{
+      cursor:pointer;
+      transition:transform .05s ease, opacity .2s ease, background .2s ease;
+      font-weight:600;
+    }
+    button:hover{opacity:.95}
+    button:active{transform:translateY(1px)}
+    .primary{background:linear-gradient(180deg,#2563eb,#1d4ed8)}
+    .success{background:linear-gradient(180deg,#22c55e,#16a34a)}
+    .danger{background:linear-gradient(180deg,#ef4444,#dc2626)}
+    .mutedBtn{background:linear-gradient(180deg,#374151,#1f2937)}
+    .chat{
+      height:52vh;
+      overflow:auto;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(2,6,23,.35);
+    }
+    .msg{
+      padding:10px 12px;
+      border-radius:14px;
+      margin:8px 0;
+      line-height:1.45;
+      white-space:pre-wrap;
+    }
+    .msg.user{
+      background:rgba(59,130,246,.18);
+      border:1px solid rgba(59,130,246,.35);
+    }
+    .msg.bot{
+      background:rgba(34,197,94,.14);
+      border:1px solid rgba(34,197,94,.30);
+    }
+    .msg.system{
+      background:rgba(148,163,184,.10);
+      border:1px solid rgba(148,163,184,.18);
+      color:#cbd5e1;
+    }
+    .pillbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      background:#0b1222;
+      border:1px solid var(--border);
+      color:#cbd5e1;
+      font-size:.85rem;
+    }
+    .progress{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      overflow:hidden;
+      background:#0b1222;
+      border:1px solid var(--border);
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#22c55e,#3b82f6);
+      transition:width .25s ease;
+    }
+    .small{font-size:.84rem;color:var(--muted)}
+    .footer-note{margin-top:12px;font-size:.82rem;color:var(--muted)}
+    .kbd{
+      display:inline-block;
+      padding:2px 7px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      background:#0b1222;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:.83rem;
+    }
+    .flex{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>🇷🇺 Russisch Trainer</h1>
+        <div class="sub">GitHub-Pages-taugliche PWA mit lokalem Lernstand, Export/Import und ChatGPT-Anbindung per API-Key.</div>
+      </div>
+      <div class="pill">Nur für dich. Kein Marketing-Gebrüll, kein App-Store-Zirkus.</div>
+    </div>
+
+    <div class="grid">
+      <aside class="card">
+        <h2>Kurssteuerung</h2>
+
+        <label for="apiKey">OpenAI API-Key</label>
+        <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+
+        <div class="footer-note">Der Key bleibt lokal im Browser gespeichert. Für privat okay, für öffentlich natürlich eher nicht. Sonst wäre das Internet noch wilder, als es sowieso schon ist.</div>
+
+        <div style="height:12px"></div>
+
+        <label for="levelSelect">Aktuelles Zielniveau</label>
+        <select id="levelSelect">
+          <option value="25">Top 25 Wörter</option>
+          <option value="50">Top 50 Wörter</option>
+          <option value="100">Top 100 Wörter</option>
+          <option value="200">Top 200 Wörter</option>
+          <option value="500">Top 500 Wörter</option>
+          <option value="1000">Top 1000 Wörter</option>
+        </select>
+
+        <div style="height:12px"></div>
+
+        <label for="knownWords">Bereits bekannte Wörter</label>
+        <input id="knownWords" type="number" min="0" step="1" placeholder="z. B. 12" />
+
+        <div style="height:12px"></div>
+
+        <label for="lessonCounter">Abgeschlossene Lektionen</label>
+        <input id="lessonCounter" type="number" min="0" step="1" placeholder="z. B. 4" />
+
+        <div style="height:12px"></div>
+
+        <div class="progress" aria-label="Fortschritt">
+          <div id="progressBar" class="bar"></div>
+        </div>
+        <div id="progressText" class="small" style="margin-top:8px">0 / 25 Wörter</div>
+
+        <div class="pillbar">
+          <div class="pill">Gespeichert: <span id="savedState">lokal</span></div>
+          <div class="pill">Installierbar als App</div>
+          <div class="pill">Offline-Grundgerüst</div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="row">
+          <button id="btnSave" class="success">Stand speichern</button>
+          <button id="btnReset" class="danger">Alles zurücksetzen</button>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <button id="btnExport" class="mutedBtn">JSON exportieren</button>
+          <button id="btnImport" class="mutedBtn">JSON importieren</button>
+        </div>
+        <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
+
+        <div style="height:14px"></div>
+
+        <h3>Schnellaktionen</h3>
+        <div class="row">
+          <button id="btnLesson" class="primary">Nächste Lektion</button>
+          <button id="btnReview" class="mutedBtn">Wiederholung</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="row-3">
+          <button id="btnQuiz" class="mutedBtn">Mini-Test</button>
+          <button id="btnDialog" class="mutedBtn">Dialog</button>
+          <button id="btnGrammar" class="mutedBtn">Grammatik</button>
+        </div>
+
+        <div class="footer-note">
+          Tipp für GitHub Pages: Die App liegt am besten im Repo-Hauptverzeichnis, damit <span class="kbd">./manifest.json</span> und <span class="kbd">./service-worker.js</span> sauber funktionieren.
+        </div>
+      </aside>
+
+      <main class="card">
+        <h2>Trainer</h2>
+        <div id="chat" class="chat"></div>
+
+        <div style="height:10px"></div>
+
+        <label for="messageInput">Deine Eingabe</label>
+        <textarea id="messageInput" placeholder="Schreib auf Deutsch oder versuch es schon auf Russisch. Keine Angst, die App lacht dich nicht aus. Ich eventuell schon, aber liebevoll."></textarea>
+
+        <div class="row">
+          <button id="btnSend" class="primary">Senden</button>
+          <button id="btnClearChat" class="mutedBtn">Chat leeren</button>
+        </div>
+
+        <div class="footer-note">
+          Enter sendet nicht automatisch, damit du auf dem Handy vernünftig tippen kannst. Ja, ich habe mitgedacht.
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "russisch_trainer_state_v2";
+    const chatEl = document.getElementById("chat");
+    const apiKeyEl = document.getElementById("apiKey");
+    const levelEl = document.getElementById("levelSelect");
+    const knownWordsEl = document.getElementById("knownWords");
+    const lessonCounterEl = document.getElementById("lessonCounter");
+    const progressBarEl = document.getElementById("progressBar");
+    const progressTextEl = document.getElementById("progressText");
+    const savedStateEl = document.getElementById("savedState");
+    const messageInputEl = document.getElementById("messageInput");
+    const importFileEl = document.getElementById("importFile");
+
+    const defaultState = {
+      apiKey: "",
+      level: 25,
+      knownWords: 0,
+      lessonsDone: 0,
+      chat: [
+        { role: "system", text: "Willkommen. Starte mit „Nächste Lektion“ oder schreib direkt etwas." }
+      ],
+      lastSavedAt: null
+    };
+
+    function sanitize(text){
+      return String(text ?? "").replace(/[&<>"]/g, s => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"
+      }[s]));
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        return { ...structuredClone(defaultState), ...parsed };
+      }catch{
+        return structuredClone(defaultState);
+      }
+    }
+
+    let state = loadState();
+
+    function saveState(showStamp = true){
+      state.apiKey = apiKeyEl.value.trim();
+      state.level = Number(levelEl.value);
+      state.knownWords = Math.max(0, Number(knownWordsEl.value || 0));
+      state.lessonsDone = Math.max(0, Number(lessonCounterEl.value || 0));
+      state.lastSavedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      savedStateEl.textContent = showStamp
+        ? new Date(state.lastSavedAt).toLocaleString("de-DE")
+        : "lokal";
+      updateProgress();
+    }
+
+    function renderChat(){
+      chatEl.innerHTML = "";
+      for(const item of state.chat){
+        const div = document.createElement("div");
+        div.className = `msg ${item.role === "user" ? "user" : item.role === "assistant" ? "bot" : "system"}`;
+        div.innerHTML = sanitize(
+          (item.role === "user" ? "Du: " : item.role === "assistant" ? "Trainer: " : "System: ") + item.text
+        ).replace(/\n/g, "<br>");
+        chatEl.appendChild(div);
+      }
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function updateProgress(){
+      const target = Number(levelEl.value || 25);
+      const known = Math.max(0, Number(knownWordsEl.value || 0));
+      const pct = Math.min(100, Math.round((known / target) * 100));
+      progressBarEl.style.width = pct + "%";
+      progressTextEl.textContent = `${known} / ${target} Wörter`;
+    }
+
+    function hydrateUI(){
+      apiKeyEl.value = state.apiKey || "";
+      levelEl.value = String(state.level || 25);
+      knownWordsEl.value = state.knownWords ?? 0;
+      lessonCounterEl.value = state.lessonsDone ?? 0;
+      savedStateEl.textContent = state.lastSavedAt ? new Date(state.lastSavedAt).toLocaleString("de-DE") : "lokal";
+      updateProgress();
+      renderChat();
+    }
+
+    function pushMessage(role, text){
+      state.chat.push({ role, text });
+      renderChat();
+      saveState(false);
+    }
+
+    function buildSystemPrompt(){
+      const level = Number(levelEl.value || 25);
+      const knownWords = Number(knownWordsEl.value || 0);
+      const lessonsDone = Number(lessonCounterEl.value || 0);
+
+      return `
+Du bist ein Russisch-Lehrer für Deutschsprachige.
+
+Didaktik:
+- Fokus auf Russisch für Anfänger.
+- Arbeite stufenweise nach Häufigkeit: 25, 50, 100, 200, 500, 1000 Wörter.
+- Nutze einfache, sehr häufige Verben und Satzmuster.
+- Lerne Wörter NICHT isoliert, sondern in kurzen sinnvollen Beispielsätzen.
+- Erkläre kurz und klar, ohne lange Vorträge.
+- Verwende nach Möglichkeit dieses Format:
+  1. Neue Wörter
+  2. Beispiel-Sätze
+  3. Mini-Übung
+  4. Sehr kurze Korrektur oder Feedback
+
+Wichtig:
+- Korrigiere freundlich, aber direkt.
+- Halte die Antworten kompakt.
+- Nutze am Anfang meist Kyrillisch UND Transliteration UND deutsche Bedeutung.
+- Überfordere nicht.
+- Wenn der Nutzer Fehler macht, gib die korrigierte Form und eine knappe Erklärung.
+- Baue immer wieder Wiederholungen ein.
+- Wenn der Nutzer nach einer Lektion fragt, gib 3 bis 6 neue Wörter oder ein kleines Satzmuster, nicht mehr.
+- Wenn der Nutzer nach Wiederholung fragt, teste aktiv.
+- Wenn der Nutzer nach Grammatik fragt, erkläre nur das Nötigste an einem Beispiel.
+- Niveauziel aktuell: Top ${level} Wörter.
+- Bereits bekannte Wörter ungefähr: ${knownWords}.
+- Bereits abgeschlossene Lektionen: ${lessonsDone}.
+
+Sei wie ein guter Trainer: klar, motivierend, nicht kitschig und nicht geschwätzig.
+`;
+    }
+
+    async function callOpenAI(userText){
+      const apiKey = apiKeyEl.value.trim();
+      if(!apiKey){
+        pushMessage("system", "Bitte zuerst deinen OpenAI API-Key eingeben.");
+        return;
+      }
+
+      pushMessage("user", userText);
+
+      const payload = {
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: buildSystemPrompt() },
+          ...state.chat
+            .filter(m => m.role === "user" || m.role === "assistant")
+            .slice(-10)
+            .map(m => ({
+              role: m.role === "assistant" ? "assistant" : "user",
+              content: m.text
+            })),
+          { role: "user", content: userText }
+        ]
+      };
+
+      try{
+        const res = await fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + apiKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        let reply = "";
+        if (data.output_text) {
+          reply = data.output_text;
+        } else if (Array.isArray(data.output)) {
+          reply = data.output
+            .flatMap(item => item.content || [])
+            .filter(c => c.type === "output_text" || c.type === "text")
+            .map(c => c.text || "")
+            .join("\n")
+            .trim();
+        }
+
+        if(!res.ok){
+          const err = data.error?.message || "Unbekannter API-Fehler";
+          pushMessage("system", "API-Fehler: " + err);
+          return;
+        }
+
+        if(!reply){
+          pushMessage("system", "Die API hat geantwortet, aber ohne lesbaren Text. Etwas zickig heute.");
+          return;
+        }
+
+        pushMessage("assistant", reply);
+      }catch(err){
+        pushMessage("system", "Netzwerkfehler: " + (err?.message || String(err)));
+      }
+    }
+
+    function exportState(){
+      saveState();
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type: "application/json"});
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+      a.href = URL.createObjectURL(blob);
+      a.download = `russisch-trainer-backup-${stamp}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importStateFromFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          state = { ...structuredClone(defaultState), ...parsed };
+          hydrateUI();
+          saveState();
+          pushMessage("system", "Import erfolgreich.");
+        }catch{
+          pushMessage("system", "Import fehlgeschlagen. JSON-Datei ungültig.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAll(){
+      if(!confirm("Wirklich alles zurücksetzen?")){
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEY);
+      state = structuredClone(defaultState);
+      hydrateUI();
+      saveState();
+    }
+
+    document.getElementById("btnSave").addEventListener("click", () => saveState());
+    document.getElementById("btnExport").addEventListener("click", exportState);
+    document.getElementById("btnImport").addEventListener("click", () => importFileEl.click());
+    importFileEl.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if(file) importStateFromFile(file);
+      e.target.value = "";
+    });
+    document.getElementById("btnReset").addEventListener("click", resetAll);
+
+    document.getElementById("btnLesson").addEventListener("click", () => {
+      const n = Number(lessonCounterEl.value || 0) + 1;
+      lessonCounterEl.value = n;
+      saveState();
+      callOpenAI("Starte die nächste Lektion mit 3 bis 6 neuen sehr häufigen Wörtern oder einem kleinen Satzmuster. Bitte mit Kyrillisch, Transliteration, deutscher Bedeutung, Beispielsätzen und einer Mini-Übung.");
+    });
+
+    document.getElementById("btnReview").addEventListener("click", () => {
+      callOpenAI("Teste mich kurz zu den bisher gelernten Wörtern und Satzmustern. Stelle 5 kleine Aufgaben und warte danach auf meine Antworten.");
+    });
+
+    document.getElementById("btnQuiz").addEventListener("click", () => {
+      callOpenAI("Gib mir einen Mini-Test mit 5 Aufgaben auf Anfängerniveau. Nutze sehr häufige Wörter und kurze Sätze.");
+    });
+
+    document.getElementById("btnDialog").addEventListener("click", () => {
+      callOpenAI("Erstelle einen Mini-Dialog mit sehr einfachen russischen Sätzen aus dem Alltagsleben. Danach soll ich 2 Zeilen selbst ergänzen.");
+    });
+
+    document.getElementById("btnGrammar").addEventListener("click", () => {
+      callOpenAI("Erkläre mir ein sehr kleines Grammatikthema für Anfänger mit nur einem einfachen Beispiel und einer Mini-Übung.");
+    });
+
+    document.getElementById("btnSend").addEventListener("click", () => {
+      const text = messageInputEl.value.trim();
+      if(!text) return;
+      messageInputEl.value = "";
+      callOpenAI(text);
+    });
+
+    document.getElementById("btnClearChat").addEventListener("click", () => {
+      state.chat = [{ role: "system", text: "Chat geleert. Der Kursstand bleibt erhalten." }];
+      renderChat();
+      saveState();
+    });
+
+    levelEl.addEventListener("change", saveState);
+    knownWordsEl.addEventListener("input", updateProgress);
+    lessonCounterEl.addEventListener("input", saveState);
+    apiKeyEl.addEventListener("change", saveState);
+
+    hydrateUI();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(err => {
+          console.warn("Service Worker Fehler:", err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
