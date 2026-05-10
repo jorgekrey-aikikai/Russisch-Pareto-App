@@ -1,0 +1,18 @@
+{
+  "name": "Russisch Trainer Offline",
+  "short_name": "RU Offline",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Offline Russisch-Lernapp mit Top 25, 50, 100, 250, 500 Wörtern.",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
