@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Русский — Karteikarten</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --surface3: #2e2e2e;
+    --border: #333;
+    --border2: #444;
+    --text: #e8e6e0;
+    --muted: #888;
+    --accent: #c8a96e;
+    --accent2: #8b5e3c;
+    --success: #4a8c5c;
+    --danger: #9b3a3a;
+    --info: #3a6b9b;
+    --radius: 10px;
+    --font: 'Georgia', serif;
+    --mono: 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-right: auto;
+  }
+  .logo span { color: var(--muted); font-weight: normal; font-size: 13px; }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+  /* SCREENS */
+  .screen { display: none; flex: 1; padding: 24px 20px; max-width: 640px; margin: 0 auto; width: 100%; }
+  .screen.active { display: flex; flex-direction: column; gap: 20px; }
+
+  /* HOME SCREEN */
+  .level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .level-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .level-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .level-card .count { font-size: 28px; font-weight: bold; color: var(--accent); }
+  .level-card .label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .level-card .due { font-size: 11px; color: var(--success); margin-top: 6px; }
+  .level-card.sentences { border-color: var(--info); }
+  .level-card.sentences:hover { border-color: #6aaddd; }
+
+  .stats-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+  .stat-box .n { font-size: 22px; color: var(--accent); }
+  .stat-box .l { font-size: 12px; color: var(--muted); }
+
+  /* FLASHCARD */
+  .card-wrapper { perspective: 1000px; height: 220px; }
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.45s ease;
+    cursor: pointer;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .card-back { transform: rotateY(180deg); background: var(--surface2); }
+  .card-lang { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .card-word { font-size: 32px; color: var(--text); line-height: 1.2; }
+  .card-word.russian { font-size: 36px; color: var(--accent); }
+  .card-hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .card-tap { font-size: 11px; color: var(--muted); margin-top: 16px; opacity: 0.5; }
+
+  .progress-bar-wrap { background: var(--surface3); border-radius: 4px; height: 4px; }
+  .progress-bar { height: 4px; background: var(--accent); border-radius: 4px; transition: width 0.3s; }
+
+  .session-info { font-size: 13px; color: var(--muted); text-align: center; }
+
+  /* RATING BUTTONS */
+  .rating-row { display: flex; gap: 10px; }
+  .rating-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 8px;
+    border: 1px solid;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.15s;
+  }
+  .rating-btn:active { transform: scale(0.97); }
+  .r-again { background: #2a1010; border-color: var(--danger); color: #e07070; }
+  .r-hard { background: #1a1a2a; border-color: #5a5aaa; color: #9090dd; }
+  .r-good { background: #102a10; border-color: var(--success); color: #70c080; }
+  .r-easy { background: #1a2a10; border-color: #7aaa3a; color: #aae060; }
+  .r-again:hover { background: #3a1515; }
+  .r-hard:hover { background: #20203a; }
+  .r-good:hover { background: #152a15; }
+  .r-easy:hover { background: #1f3015; }
+
+  /* EXERCISE SCREENS */
+  .ex-prompt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .ex-de { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .ex-sentence { font-size: 20px; line-height: 1.5; }
+  .ex-sentence .blank {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: 22px;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  /* WORD SORT */
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px;
+    background: var(--surface3);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .word-token {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: var(--font);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .word-token:hover { border-color: var(--accent); color: var(--accent); }
+  .word-token.placed { opacity: 0.35; cursor: default; }
+  .answer-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px dashed var(--border2);
+  }
+  .slot-token {
+    background: var(--info);
+    border: none;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .slot-token:hover { background: #2a5a8a; }
+
+  /* GAP FILL */
+  .gap-input {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-size: 18px;
+    font-family: var(--font);
+    padding: 10px 14px;
+    border-radius: 8px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .gap-input:focus { border-color: var(--accent); }
+
+  /* CYRILLIC KEYBOARD */
+  .keyboard-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .kb-row { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .kb-key {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    min-width: 30px;
+    height: 36px;
+    padding: 0 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    font-family: var(--font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    user-select: none;
+  }
+  .kb-key:hover { background: var(--surface3); border-color: var(--accent); }
+  .kb-key:active { transform: scale(0.93); background: var(--accent2); }
+  .kb-key.wide { min-width: 54px; font-size: 12px; color: var(--muted); }
+
+  /* FEEDBACK */
+  .feedback-box {
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 15px;
+    text-align: center;
+  }
+  .feedback-box.correct { background: #0e2a14; border: 1px solid var(--success); color: #70c080; }
+  .feedback-box.wrong { background: #2a0e0e; border: 1px solid var(--danger); color: #e07070; }
+
+  /* BUTTONS */
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-family: var(--font);
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn:hover { background: #d4b87e; }
+  .btn.secondary {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+  .btn.secondary:hover { border-color: var(--accent); color: var(--accent); background: none; }
+
+  .section-title { font-size: 13px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+  /* DONE SCREEN */
+  .done-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+  }
+  .done-card .big { font-size: 48px; color: var(--accent); font-weight: bold; }
+  .done-card p { color: var(--muted); margin-top: 8px; }
+
+  .hidden { display: none !important; }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface3);
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  @media (max-width: 480px) {
+    .kb-key { min-width: 26px; height: 32px; font-size: 13px; padding: 0 4px; }
+    .word-token, .slot-token { font-size: 14px; padding: 5px 10px; }
+    .card-word { font-size: 26px; }
+    .card-word.russian { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Русский <span>SM-2</span></div>
+  <button class="nav-btn active" onclick="showScreen('home')">Übersicht</button>
+  <button class="nav-btn" onclick="showScreen('browse')">Alle Wörter</button>
+</nav>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="stats-row">
+    <div class="stat-box"><div class="n" id="stat-total">0</div><div class="l">Wörter gesamt</div></div>
+    <div class="stat-box"><div class="n" id="stat-due">0</div><div class="l">Fällig heute</div></div>
+    <div class="stat-box"><div class="n" id="stat-known">0</div><div class="l">Gelernt</div></div>
+  </div>
+
+  <div class="section-title">Vokabeln nach Frequenz</div>
+  <div class="level-grid" id="level-grid"></div>
+
+  <div class="section-title">Satzübungen</div>
+  <div class="level-grid">
+    <div class="level-card sentences" onclick="startExercise('sort')">
+      <div class="count">🔀</div>
+      <div class="label">Wörter sortieren</div>
+      <div class="due">Satz aufbauen</div>
+    </div>
+    <div class="level-card sentences" onclick="startExercise('gap')">
+      <div class="count">✍️</div>
+      <div class="label">Lückentext</div>
+      <div class="due">Kyrillisch eingeben</div>
+    </div>
+  </div>
+</div>
+
+<!-- FLASHCARD SESSION -->
+<div id="screen-cards" class="screen">
+  <div class="session-info" id="session-info">Karte 1 von 10</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+
+  <div class="card-wrapper">
+    <div class="card" id="flashcard" onclick="flipCard()">
+      <div class="card-front">
+        <div class="tag" id="card-direction">RU → DE</div>
+        <div class="card-lang" id="card-lang-front">Russisch</div>
+        <div class="card-word" id="card-front-word">слово</div>
+        <div class="card-tap">Tippen zum Umdrehen</div>
+      </div>
+      <div class="card-back">
+        <div class="card-lang" id="card-lang-back">Deutsch</div>
+        <div class="card-word" id="card-back-word">Wort</div>
+        <div class="card-hint" id="card-hint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rating-wrap" class="hidden">
+    <div class="section-title" style="text-align:center; margin-bottom:10px">Wie gut kanntest du es?</div>
+    <div class="rating-row">
+      <button class="rating-btn r-again" onclick="rateCard(0)">Nochmal<br><span style="font-size:10px;opacity:0.7">&lt;1 Min</span></button>
+      <button class="rating-btn r-hard" onclick="rateCard(1)">Schwer<br><span style="font-size:10px;opacity:0.7">+1-2T</span></button>
+      <button class="rating-btn r-good" onclick="rateCard(3)">Gut<br><span style="font-size:10px;opacity:0.7">+Intervall</span></button>
+      <button class="rating-btn r-easy" onclick="rateCard(5)">Leicht<br><span style="font-size:10px;opacity:0.7">+Länger</span></button>
+    </div>
+  </div>
+
+  <div id="flip-hint" style="text-align:center; margin-top:8px">
+    <button class="btn secondary" onclick="flipCard()">Umdrehen</button>
+  </div>
+
+  <button class="btn secondary" onclick="showScreen('home')" style="margin-top:4px">Abbrechen</button>
+</div>
+
+<!-- SORT EXERCISE -->
+<div id="screen-sort" class="screen">
+  <div class="session-info" id="sort-info">Übung 1 von 10</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="sort-progress" style="width:0%"></div></div>
+
+  <div class="ex-prompt">
+    <div class="ex-de" id="sort-de"></div>
+    <div id="sort-answer" class="answer-slots"></div>
+  </div>
+
+  <div class="section-title">Wörter</div>
+  <div class="word-bank" id="sort-bank"></div>
+
+  <div id="sort-feedback" class="hidden"></div>
+
+  <div id="sort-next" class="hidden">
+    <button class="btn" onclick="nextSort()">Weiter →</button>
+  </div>
+  <button class="btn secondary" onclick="showScreen('home')">Abbrechen</button>
+</div>
+
+<!-- GAP EXERCISE -->
+<div id="screen-gap" class="screen">
+  <div class="session-info" id="gap-info">Übung 1 von 10</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="gap-progress" style="width:0%"></div></div>
+
+  <div class="ex-prompt">
+    <div class="ex-de" id="gap-de"></div>
+    <div class="ex-sentence" id="gap-sentence"></div>
+  </div>
+
+  <input type="text" class="gap-input" id="gap-input" placeholder="Russisches Wort eingeben…" autocomplete="off" autocorrect="off" spellcheck="false">
+
+  <div class="keyboard-wrap" id="cyrillic-kb"></div>
+
+  <button class="btn" onclick="checkGap()" id="gap-check-btn">Prüfen</button>
+
+  <div id="gap-feedback" class="hidden"></div>
+
+  <div id="gap-next" class="hidden">
+    <button class="btn" onclick="nextGap()">Weiter →</button>
+  </div>
+  <button class="btn secondary" onclick="showScreen('home')">Abbrechen</button>
+</div>
+
+<!-- BROWSE -->
+<div id="screen-browse" class="screen">
+  <div class="section-title">Alle Wörter</div>
+  <div id="browse-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+</div>
+
+<!-- DONE -->
+<div id="screen-done" class="screen">
+  <div class="done-card">
+    <div class="big">✓</div>
+    <h2 style="color:var(--text); margin-top:12px" id="done-title">Session abgeschlossen!</h2>
+    <p id="done-stats"></p>
+    <button class="btn" onclick="showScreen('home')" style="margin-top:24px">Zur Übersicht</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA — Top Russian words by frequency
+// ============================================================
+const LEVELS = [
+  { id: 25,   label: '25 Wörter',   color: '#4a8c5c' },
+  { id: 50,   label: '50 Wörter',   color: '#3a6b9b' },
+  { id: 100,  label: '100 Wörter',  color: '#7a5a9b' },
+  { id: 250,  label: '250 Wörter',  color: '#9b7a3a' },
+  { id: 1000, label: '1000 Wörter', color: '#9b3a3a' },
+];
+
+// 250 most frequent Russian words with German translations
+const ALL_WORDS = [
+  // Top 25
+  {ru:'я',de:'ich'},{ru:'не',de:'nicht'},{ru:'он',de:'er'},{ru:'на',de:'auf/an'},{ru:'я',de:'ich'},
+  {ru:'что',de:'was/dass'},{ru:'в',de:'in'},{ru:'и',de:'und'},{ru:'вы',de:'Sie/ihr'},{ru:'да',de:'ja'},
+  {ru:'то',de:'dann/das'},{ru:'все',de:'alle/alles'},{ru:'она',de:'sie (weibl.)'},{ru:'так',de:'so'},{ru:'его',de:'sein/ihn'},
+  {ru:'но',de:'aber'},{ru:'это',de:'das/dies'},{ru:'они',de:'sie (Pl.)'},{ru:'мне',de:'mir'},{ru:'ну',de:'na/nun'},
+  {ru:'хорошо',de:'gut'},{ru:'вот',de:'hier/das ist'},{ru:'меня',de:'mich/mir'},{ru:'уже',de:'schon/bereits'},{ru:'нет',de:'nein/kein'},
+  // 26-50
+  {ru:'себя',de:'sich'},{ru:'если',de:'wenn/ob'},{ru:'есть',de:'sein/essen'},{ru:'один',de:'ein/einer'},{ru:'как',de:'wie'},
+  {ru:'мы',de:'wir'},{ru:'к',de:'zu/nach'},{ru:'ты',de:'du'},{ru:'там',de:'dort'},{ru:'же',de:'doch/ja'},
+  {ru:'по',de:'durch/entlang'},{ru:'можно',de:'man kann/darf'},{ru:'время',de:'Zeit'},{ru:'знать',de:'wissen'},{ru:'сказать',de:'sagen'},
+  {ru:'ещё',de:'noch'},{ru:'о',de:'über'},{ru:'из',de:'aus'},{ru:'ему',de:'ihm'},{ru:'очень',de:'sehr'},
+  {ru:'здесь',de:'hier'},{ru:'когда',de:'wann/als'},{ru:'тебя',de:'dich/dir'},{ru:'мой',de:'mein'},{ru:'просто',de:'einfach/nur'},
+  // 51-100
+  {ru:'человек',de:'Mensch'},{ru:'говорить',de:'sprechen'},{ru:'год',de:'Jahr'},{ru:'идти',de:'gehen'},{ru:'тут',de:'hier'},
+  {ru:'ничего',de:'nichts'},{ru:'него',de:'ihn/sein'},{ru:'которые',de:'welche/die'},{ru:'её',de:'ihr/sie'},{ru:'раз',de:'mal/einmal'},
+  {ru:'этот',de:'dieser'},{ru:'работа',de:'Arbeit'},{ru:'большой',de:'groß'},{ru:'потому',de:'deshalb/weil'},{ru:'дом',de:'Haus'},
+  {ru:'день',de:'Tag'},{ru:'жизнь',de:'Leben'},{ru:'новый',de:'neu'},{ru:'где',de:'wo'},{ru:'между',de:'zwischen'},
+  {ru:'потом',de:'danach/dann'},{ru:'никогда',de:'niemals'},{ru:'люди',de:'Menschen'},{ru:'первый',de:'erster'},{ru:'много',de:'viel'},
+  {ru:'тогда',de:'damals/dann'},{ru:'ли',de:'(Fragepart.)'},{ru:'хотеть',de:'wollen'},{ru:'с',de:'mit/von'},{ru:'делать',de:'machen/tun'},
+  {ru:'стать',de:'werden'},{ru:'всё',de:'alles'},{ru:'чтобы',de:'damit/um zu'},{ru:'видеть',de:'sehen'},{ru:'два',de:'zwei'},
+  {ru:'думать',de:'denken'},{ru:'должен',de:'müssen/sollen'},{ru:'который',de:'welcher/der'},{ru:'место',de:'Ort/Platz'},{ru:'конечно',de:'natürlich'},
+  {ru:'только',de:'nur'},{ru:'взять',de:'nehmen'},{ru:'пойти',de:'gehen (perf.)'},{ru:'спасибо',de:'danke'},{ru:'тебе',de:'dir'},
+  {ru:'а',de:'aber/und'},{ru:'за',de:'hinter/für'},{ru:'при',de:'bei/während'},{ru:'сам',de:'selbst'},{ru:'нас',de:'uns'},
+  // 101-150
+  {ru:'знаю',de:'ich weiß'},{ru:'деньги',de:'Geld'},{ru:'рука',de:'Hand/Arm'},{ru:'сейчас',de:'jetzt/gleich'},{ru:'вдруг',de:'plötzlich'},
+  {ru:'несмотря',de:'obwohl/trotz'},{ru:'написать',de:'schreiben (perf.)'},{ru:'никто',de:'niemand'},{ru:'без',de:'ohne'},{ru:'мир',de:'Welt/Frieden'},
+  {ru:'стоять',de:'stehen'},{ru:'сторона',de:'Seite'},{ru:'вопрос',de:'Frage'},{ru:'назад',de:'zurück'},{ru:'ещё раз',de:'nochmal'},
+  {ru:'жить',de:'leben'},{ru:'слово',de:'Wort'},{ru:'маленький',de:'klein'},{ru:'почему',de:'warum'},{ru:'друг',de:'Freund'},
+  {ru:'ребята',de:'Jungs/Leute'},{ru:'свой',de:'sein/ihr (eigen)'},{ru:'этого',de:'dieses'},{ru:'глаза',de:'Augen'},{ru:'ночь',de:'Nacht'},
+  {ru:'через',de:'durch/über'},{ru:'надо',de:'man muss'},{ru:'город',de:'Stadt'},{ru:'россия',de:'Russland'},{ru:'минута',de:'Minute'},
+  {ru:'три',de:'drei'},{ru:'около',de:'ungefähr/bei'},{ru:'хотя',de:'obwohl'},{ru:'против',de:'gegen'},{ru:'прийти',de:'kommen (perf.)'},
+  {ru:'мать',de:'Mutter'},{ru:'после',de:'nach'},{ru:'снова',de:'wieder'},{ru:'далеко',de:'weit'},{ru:'система',de:'System'},
+  {ru:'несколько',de:'einige/mehrere'},{ru:'страна',de:'Land/Staat'},{ru:'понять',de:'verstehen (perf.)'},{ru:'дать',de:'geben'},{ru:'ваш',de:'Ihr/euer'},
+  {ru:'конец',de:'Ende'},{ru:'хотеть',de:'wollen'},{ru:'лицо',de:'Gesicht'},{ru:'открыть',de:'öffnen'},{ru:'рядом',de:'daneben'},
+  // 151-250
+  {ru:'прямо',de:'direkt/geradeaus'},{ru:'ребёнок',de:'Kind'},{ru:'голос',de:'Stimme'},{ru:'важно',de:'wichtig'},{ru:'подождать',de:'warten (perf.)'},
+  {ru:'читать',de:'lesen'},{ru:'писать',de:'schreiben'},{ru:'сколько',de:'wie viel'},{ru:'мало',de:'wenig'},{ru:'быстро',de:'schnell'},
+  {ru:'медленно',de:'langsam'},{ru:'дорогой',de:'teuer/lieber'},{ru:'дешёвый',de:'billig'},{ru:'тяжело',de:'schwer'},{ru:'легко',de:'leicht/einfach'},
+  {ru:'красивый',de:'schön'},{ru:'старый',de:'alt'},{ru:'молодой',de:'jung'},{ru:'высокий',de:'hoch/groß'},{ru:'низкий',de:'niedrig/klein'},
+  {ru:'много',de:'viel'},{ru:'мало',de:'wenig'},{ru:'всегда',de:'immer'},{ru:'иногда',de:'manchmal'},{ru:'никогда',de:'nie'},
+  {ru:'сегодня',de:'heute'},{ru:'вчера',de:'gestern'},{ru:'завтра',de:'morgen'},{ru:'утром',de:'morgens'},{ru:'вечером',de:'abends'},
+  {ru:'ночью',de:'nachts'},{ru:'понедельник',de:'Montag'},{ru:'вторник',de:'Dienstag'},{ru:'среда',de:'Mittwoch'},{ru:'четверг',de:'Donnerstag'},
+  {ru:'пятница',de:'Freitag'},{ru:'суббота',de:'Samstag'},{ru:'воскресенье',de:'Sonntag'},{ru:'январь',de:'Januar'},{ru:'февраль',de:'Februar'},
+  {ru:'март',de:'März'},{ru:'апрель',de:'April'},{ru:'май',de:'Mai'},{ru:'июнь',de:'Juni'},{ru:'июль',de:'Juli'},
+  {ru:'август',de:'August'},{ru:'сентябрь',de:'September'},{ru:'октябрь',de:'Oktober'},{ru:'ноябрь',de:'November'},{ru:'декабрь',de:'Dezember'},
+  {ru:'еда',de:'Essen'},{ru:'вода',de:'Wasser'},{ru:'хлеб',de:'Brot'},{ru:'молоко',de:'Milch'},{ru:'мясо',de:'Fleisch'},
+  {ru:'рыба',de:'Fisch'},{ru:'фрукт',de:'Obst/Frucht'},{ru:'овощ',de:'Gemüse'},{ru:'кофе',de:'Kaffee'},{ru:'чай',de:'Tee'},
+  {ru:'школа',de:'Schule'},{ru:'учитель',de:'Lehrer'},{ru:'студент',de:'Student'},{ru:'книга',de:'Buch'},{ru:'стол',de:'Tisch'},
+  {ru:'стул',de:'Stuhl'},{ru:'кровать',de:'Bett'},{ru:'окно',de:'Fenster'},{ru:'дверь',de:'Tür'},{ru:'улица',de:'Straße'},
+  {ru:'машина',de:'Auto'},{ru:'поезд',de:'Zug'},{ru:'самолёт',de:'Flugzeug'},{ru:'деньги',de:'Geld'},{ru:'магазин',de:'Geschäft'},
+  {ru:'больница',de:'Krankenhaus'},{ru:'врач',de:'Arzt'},{ru:'лекарство',de:'Medikament'},{ru:'здоровье',de:'Gesundheit'},{ru:'погода',de:'Wetter'},
+  {ru:'солнце',de:'Sonne'},{ru:'дождь',de:'Regen'},{ru:'снег',de:'Schnee'},{ru:'ветер',de:'Wind'},{ru:'тепло',de:'warm'},
+  {ru:'холодно',de:'kalt'},{ru:'любить',de:'lieben'},{ru:'помочь',de:'helfen'},{ru:'играть',de:'spielen'},{ru:'работать',de:'arbeiten'},
+];
+
+// Remove duplicates by ru
+const seen = new Set();
+const WORDS = ALL_WORDS.filter(w => {
+  if (seen.has(w.ru)) return false;
+  seen.add(w.ru);
+  return true;
+});
+
+// Sentences using most common words
+const SENTENCES = [
+  {ru:['Я','не','знаю'],de:'Ich weiß nicht.',gap:1,gapWord:'не'},
+  {ru:['Это','очень','хорошо'],de:'Das ist sehr gut.',gap:2,gapWord:'хорошо'},
+  {ru:['Он','живёт','здесь'],de:'Er wohnt hier.',gap:1,gapWord:'живёт'},
+  {ru:['Как','вас','зовут?'],de:'Wie heißen Sie?',gap:0,gapWord:'Как'},
+  {ru:['Я','хочу','есть'],de:'Ich möchte essen.',gap:2,gapWord:'есть'},
+  {ru:['Спасибо','большое'],de:'Vielen Dank.',gap:0,gapWord:'Спасибо'},
+  {ru:['Где','вы','живёте?'],de:'Wo wohnen Sie?',gap:0,gapWord:'Где'},
+  {ru:['Она','говорит','по-русски'],de:'Sie spricht Russisch.',gap:1,gapWord:'говорит'},
+  {ru:['Мы','идём','домой'],de:'Wir gehen nach Hause.',gap:1,gapWord:'идём'},
+  {ru:['Это','моя','книга'],de:'Das ist mein Buch.',gap:2,gapWord:'книга'},
+  {ru:['Сегодня','хорошая','погода'],de:'Heute ist schönes Wetter.',gap:0,gapWord:'Сегодня'},
+  {ru:['Я','люблю','читать'],de:'Ich lese gern.',gap:2,gapWord:'читать'},
+  {ru:['Он','работает','здесь'],de:'Er arbeitet hier.',gap:1,gapWord:'работает'},
+  {ru:['Вы','говорите','по-немецки?'],de:'Sprechen Sie Deutsch?',gap:1,gapWord:'говорите'},
+  {ru:['Это','очень','красиво'],de:'Das ist sehr schön.',gap:2,gapWord:'красиво'},
+  {ru:['Я','хочу','воды'],de:'Ich möchte Wasser.',gap:2,gapWord:'воды'},
+  {ru:['Где','мой','телефон?'],de:'Wo ist mein Telefon?',gap:0,gapWord:'Где'},
+  {ru:['Мне','нравится','этот','город'],de:'Mir gefällt diese Stadt.',gap:3,gapWord:'город'},
+  {ru:['Сколько','это','стоит?'],de:'Wie viel kostet das?',gap:0,gapWord:'Сколько'},
+  {ru:['Я','не','понимаю'],de:'Ich verstehe nicht.',gap:2,gapWord:'понимаю'},
+];
+
+// ============================================================
+// SM-2 STATE
+// ============================================================
+const SM2_DEFAULTS = { interval: 1, repetitions: 0, easeFactor: 2.5, nextReview: 0 };
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('ru_sm2') || '{}'); } catch { return {}; }
+}
+function saveState(s) { localStorage.setItem('ru_sm2', JSON.stringify(s)); }
+
+let state = loadState();
+
+function getCard(ru) {
+  if (!state[ru]) state[ru] = { ...SM2_DEFAULTS };
+  return state[ru];
+}
+
+function sm2Update(card, quality) {
+  if (quality >= 3) {
+    if (card.repetitions === 0) card.interval = 1;
+    else if (card.repetitions === 1) card.interval = 6;
+    else card.interval = Math.round(card.interval * card.easeFactor);
+    card.repetitions++;
+  } else {
+    card.repetitions = 0;
+    card.interval = 1;
+  }
+  card.easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  card.nextReview = Date.now() + card.interval * 86400000;
+}
+
+function isDue(ru) {
+  const c = getCard(ru);
+  return c.nextReview <= Date.now();
+}
+
+function isLearned(ru) {
+  const c = getCard(ru);
+  return c.repetitions >= 2 && c.interval > 1;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (id === 'home') { updateHome(); document.querySelectorAll('.nav-btn')[0].classList.add('active'); }
+  if (id === 'browse') { renderBrowse(); document.querySelectorAll('.nav-btn')[1].classList.add('active'); }
+}
+
+function getWordsForLevel(n) { return WORDS.slice(0, n); }
+
+function updateHome() {
+  const allW = WORDS;
+  const due = allW.filter(w => isDue(w.ru)).length;
+  const known = allW.filter(w => isLearned(w.ru)).length;
+  document.getElementById('stat-total').textContent = WORDS.length;
+  document.getElementById('stat-due').textContent = due;
+  document.getElementById('stat-known').textContent = known;
+
+  const grid = document.getElementById('level-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach(lv => {
+    const words = getWordsForLevel(lv.id);
+    const dueN = words.filter(w => isDue(w.ru)).length;
+    const card = document.createElement('div');
+    card.className = 'level-card';
+    card.style.borderColor = dueN > 0 ? lv.color : 'var(--border)';
+    card.innerHTML = `<div class="count" style="color:${lv.color}">${lv.id}</div>
+      <div class="label">${lv.label}</div>
+      <div class="due">${dueN > 0 ? dueN + ' fällig' : '✓ aktuell'}</div>`;
+    card.onclick = () => startCards(lv.id);
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// FLASHCARD SESSION
+// ============================================================
+let session = { queue: [], idx: 0, again: [], correct: 0, total: 0 };
+
+function startCards(levelN) {
+  const words = getWordsForLevel(levelN);
+  let queue = words.filter(w => isDue(w.ru));
+  if (queue.length === 0) queue = words.slice(0, 10); // if nothing due, show first 10
+  queue = shuffle(queue).slice(0, 20);
+  session = { queue, idx: 0, again: [], correct: 0, total: queue.length };
+  showScreen('cards');
+  renderCard();
+}
+
+function renderCard() {
+  if (session.idx >= session.queue.length) {
+    if (session.again.length > 0) {
+      session.queue = session.again;
+      session.again = [];
+      session.idx = 0;
+      renderCard();
+      return;
+    }
+    saveState(state);
+    showDone('Karteikarten', session.correct, session.total);
+    return;
+  }
+  const w = session.queue[session.idx];
+  const ru2de = Math.random() > 0.5;
+  session.currentDirection = ru2de;
+
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('rating-wrap').classList.add('hidden');
+  document.getElementById('flip-hint').classList.remove('hidden');
+
+  if (ru2de) {
+    document.getElementById('card-direction').textContent = 'RU → DE';
+    document.getElementById('card-lang-front').textContent = 'Russisch';
+    document.getElementById('card-front-word').textContent = w.ru;
+    document.getElementById('card-front-word').className = 'card-word russian';
+    document.getElementById('card-lang-back').textContent = 'Deutsch';
+    document.getElementById('card-back-word').textContent = w.de;
+    document.getElementById('card-back-word').className = 'card-word';
+  } else {
+    document.getElementById('card-direction').textContent = 'DE → RU';
+    document.getElementById('card-lang-front').textContent = 'Deutsch';
+    document.getElementById('card-front-word').textContent = w.de;
+    document.getElementById('card-front-word').className = 'card-word';
+    document.getElementById('card-lang-back').textContent = 'Russisch';
+    document.getElementById('card-back-word').textContent = w.ru;
+    document.getElementById('card-back-word').className = 'card-word russian';
+  }
+  document.getElementById('card-hint').textContent = '';
+
+  const total = session.queue.length;
+  document.getElementById('session-info').textContent = `Karte ${session.idx + 1} von ${total}`;
+  document.getElementById('progress-bar').style.width = ((session.idx / total) * 100) + '%';
+}
+
+function flipCard() {
+  document.getElementById('flashcard').classList.add('flipped');
+  document.getElementById('rating-wrap').classList.remove('hidden');
+  document.getElementById('flip-hint').classList.add('hidden');
+}
+
+function rateCard(quality) {
+  const w = session.queue[session.idx];
+  const card = getCard(w.ru);
+  sm2Update(card, quality);
+  if (quality < 3) session.again.push(w);
+  else session.correct++;
+  session.idx++;
+  renderCard();
+}
+
+// ============================================================
+// SORT EXERCISE
+// ============================================================
+let sortSession = { queue: [], idx: 0, correct: 0 };
+let sortPlaced = [];
+
+function startExercise(type) {
+  const q = shuffle([...SENTENCES]).slice(0, 10);
+  if (type === 'sort') {
+    sortSession = { queue: q, idx: 0, correct: 0 };
+    showScreen('sort');
+    renderSort();
+  } else {
+    sortSession = { queue: q, idx: 0, correct: 0 };
+    showScreen('gap');
+    renderGap();
+  }
+}
+
+function renderSort() {
+  if (sortSession.idx >= sortSession.queue.length) {
+    saveState(state);
+    showDone('Sortierübung', sortSession.correct, sortSession.queue.length);
+    return;
+  }
+  const s = sortSession.queue[sortSession.idx];
+  sortPlaced = [];
+  document.getElementById('sort-info').textContent = `Übung ${sortSession.idx + 1} von ${sortSession.queue.length}`;
+  document.getElementById('sort-progress').style.width = (sortSession.idx / sortSession.queue.length * 100) + '%';
+  document.getElementById('sort-de').textContent = s.de;
+  document.getElementById('sort-feedback').classList.add('hidden');
+  document.getElementById('sort-next').classList.add('hidden');
+  document.getElementById('sort-answer').innerHTML = '';
+
+  const shuffled = shuffle([...s.ru]);
+  const bank = document.getElementById('sort-bank');
+  bank.innerHTML = '';
+  shuffled.forEach((w, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'word-token';
+    btn.textContent = w;
+    btn.dataset.word = w;
+    btn.dataset.idx = i;
+    btn.onclick = () => placeWord(btn, w, i);
+    bank.appendChild(btn);
+  });
+}
+
+function placeWord(btn, word, bankIdx) {
+  if (btn.classList.contains('placed')) return;
+  btn.classList.add('placed');
+  sortPlaced.push({ word, bankIdx });
+
+  const slot = document.createElement('button');
+  slot.className = 'slot-token';
+  slot.textContent = word;
+  slot.onclick = () => removeWord(slot, btn);
+  document.getElementById('sort-answer').appendChild(slot);
+
+  const s = sortSession.queue[sortSession.idx];
+  if (sortPlaced.length === s.ru.length) checkSort();
+}
+
+function removeWord(slot, btn) {
+  sortPlaced = sortPlaced.filter(p => p.bankIdx !== parseInt(btn.dataset.idx));
+  btn.classList.remove('placed');
+  slot.remove();
+}
+
+function checkSort() {
+  const s = sortSession.queue[sortSession.idx];
+  const answer = sortPlaced.map(p => p.word).join(' ');
+  const correct = s.ru.join(' ');
+  const fb = document.getElementById('sort-feedback');
+  fb.classList.remove('hidden');
+  if (answer === correct) {
+    fb.className = 'feedback-box correct';
+    fb.textContent = '✓ Richtig!';
+    sortSession.correct++;
+  } else {
+    fb.className = 'feedback-box wrong';
+    fb.textContent = `✗ Richtig: ${correct}`;
+  }
+  document.getElementById('sort-next').classList.remove('hidden');
+}
+
+function nextSort() {
+  sortSession.idx++;
+  renderSort();
+}
+
+// ============================================================
+// GAP EXERCISE
+// ============================================================
+function renderGap() {
+  if (sortSession.idx >= sortSession.queue.length) {
+    showDone('Lückentext', sortSession.correct, sortSession.queue.length);
+    return;
+  }
+  const s = sortSession.queue[sortSession.idx];
+  document.getElementById('gap-info').textContent = `Übung ${sortSession.idx + 1} von ${sortSession.queue.length}`;
+  document.getElementById('gap-progress').style.width = (sortSession.idx / sortSession.queue.length * 100) + '%';
+  document.getElementById('gap-de').textContent = s.de;
+  document.getElementById('gap-feedback').classList.add('hidden');
+  document.getElementById('gap-next').classList.add('hidden');
+  document.getElementById('gap-check-btn').classList.remove('hidden');
+
+  const inp = document.getElementById('gap-input');
+  inp.value = '';
+  inp.disabled = false;
+
+  // Render sentence with blank
+  const sentDiv = document.getElementById('gap-sentence');
+  sentDiv.innerHTML = s.ru.map((w, i) => {
+    if (i === s.gap) return `<span class="blank" id="gap-blank">___</span>`;
+    return w;
+  }).join(' ');
+
+  buildCyrillicKeyboard();
+
+  inp.onkeydown = (e) => { if (e.key === 'Enter') checkGap(); };
+  inp.focus();
+}
+
+function buildCyrillicKeyboard() {
+  const rows = [
+    ['й','ц','у','к','е','н','г','ш','щ','з','х','ъ'],
+    ['ф','ы','в','а','п','р','о','л','д','ж','э'],
+    ['я','ч','с','м','и','т','ь','б','ю','←','⎵'],
+  ];
+  const kb = document.getElementById('cyrillic-kb');
+  kb.innerHTML = '';
+  rows.forEach(row => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'kb-row';
+    row.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'kb-key' + (ch === '←' || ch === '⎵' ? ' wide' : '');
+      btn.textContent = ch;
+      btn.onclick = () => {
+        const inp = document.getElementById('gap-input');
+        if (ch === '←') inp.value = inp.value.slice(0, -1);
+        else if (ch === '⎵') inp.value += ' ';
+        else inp.value += ch;
+        document.getElementById('gap-blank').textContent = inp.value || '___';
+        inp.focus();
+      };
+      rowDiv.appendChild(btn);
+    });
+    kb.appendChild(rowDiv);
+  });
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'gap-input') {
+    const blank = document.getElementById('gap-blank');
+    if (blank) blank.textContent = e.target.value || '___';
+  }
+});
+
+function checkGap() {
+  const s = sortSession.queue[sortSession.idx];
+  const answer = document.getElementById('gap-input').value.trim().toLowerCase();
+  const correct = s.gapWord.toLowerCase();
+  const fb = document.getElementById('gap-feedback');
+  fb.classList.remove('hidden');
+  document.getElementById('gap-check-btn').classList.add('hidden');
+  document.getElementById('gap-input').disabled = true;
+  document.getElementById('gap-blank').textContent = s.gapWord;
+  if (answer === correct) {
+    fb.className = 'feedback-box correct';
+    fb.textContent = '✓ Richtig!';
+    sortSession.correct++;
+  } else {
+    fb.className = 'feedback-box wrong';
+    fb.textContent = `✗ Richtig: ${s.gapWord}`;
+  }
+  document.getElementById('gap-next').classList.remove('hidden');
+}
+
+function nextGap() {
+  sortSession.idx++;
+  renderGap();
+}
+
+// ============================================================
+// BROWSE
+// ============================================================
+function renderBrowse() {
+  const list = document.getElementById('browse-list');
+  list.innerHTML = '';
+  WORDS.forEach(w => {
+    const c = getCard(w.ru);
+    const learned = isLearned(w.ru);
+    const due = isDue(w.ru);
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;';
+    div.innerHTML = `
+      <span style="font-size:18px;color:var(--accent);min-width:80px">${w.ru}</span>
+      <span style="color:var(--muted);flex:1;font-size:14px">${w.de}</span>
+      <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${learned?'#0e2a14':due?'#2a1010':'var(--surface3)'};color:${learned?'#70c080':due?'#e07070':'var(--muted)'}">${learned?'✓':due?'fällig':'neu'}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ============================================================
+// DONE SCREEN
+// ============================================================
+function showDone(type, correct, total) {
+  document.getElementById('done-title').textContent = `${type} abgeschlossen!`;
+  document.getElementById('done-stats').textContent = `${correct} von ${total} richtig`;
+  showScreen('done');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// INIT
+updateHome();
+</script>
+</body>
+</html>
